@@ -1,0 +1,4 @@
+#!/bin/bash
+
+chmod +x /usr/bin/slices
+chown -R mobile /private/var/mobile/slices
