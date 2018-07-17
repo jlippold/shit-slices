@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Example: slice Snapchat create jed1
+# Example: slices Snapchat create jed
 
 ### VARIABLES
 
@@ -9,6 +9,7 @@ ACTION=$2
 PROFILE_NAME=$3
 
 BUNDLE_ID=""
+EXECUTABLE=$APP_NAME
 DATA_BUNDLE_ID=""
 GROUP_BUNDLE_ID=""
 PROFILES=()
@@ -59,6 +60,13 @@ function defineBundleIds {
                             local this_name=$(plutil -key CFBundleName "$APP_FOLDER/Info.plist" 2> /dev/null)
                             if [ "$APP_NAME" == "$this_name" ]; then
                                 BUNDLE_ID=$(plutil -key CFBundleIdentifier "$APP_FOLDER/Info.plist")
+                                EXECUTABLE=$(plutil -key CFBundleExecutable "$APP_FOLDER/Info.plist")
+                            fi
+                            
+                            local this_name=$(plutil -key CFBundleDisplayName "$APP_FOLDER/Info.plist" 2> /dev/null)
+                            if [ "$APP_NAME" == "$this_name" ]; then
+                                BUNDLE_ID=$(plutil -key CFBundleIdentifier "$APP_FOLDER/Info.plist")
+                                EXECUTABLE=$(plutil -key CFBundleExecutable "$APP_FOLDER/Info.plist")
                             fi
                         fi
                     fi
@@ -84,7 +92,6 @@ function defineBundleIds {
 
 function setup {
 
-    killall $APP_NAME 2> /dev/null
 
     # create base
     mkdir -p $MP_ROOT
@@ -105,7 +112,7 @@ function defineAppPaths {
         if [ -d ${APP_FOLDER} ]; then
             if [ -f "$APP_FOLDER/$metadata" ]; then
                 local this_bundle_id=$(plutil -key MCMMetadataIdentifier "$APP_FOLDER/$metadata" 2> /dev/null)
-                if [ "$GROUP_BUNDLE_ID" == "$this_bundle_id" ]; then
+                if [ "$GROUP_BUNDLE_ID" == "$this_bundle_id" ] || [ "$BUNDLE_ID" == "$this_bundle_id" ]; then
                     APP_GROUP_DATA_GUID=$(basename "$APP_FOLDER")
                 fi
             fi
@@ -116,7 +123,7 @@ function defineAppPaths {
         if [ -d ${APP_FOLDER} ]; then
             if [ -f "$APP_FOLDER/$metadata" ]; then
                 local this_bundle_id=$(plutil -key MCMMetadataIdentifier "$APP_FOLDER/$metadata" 2> /dev/null)
-                if [ "$DATA_BUNDLE_ID" == "$this_bundle_id" ]; then
+                if [ "$DATA_BUNDLE_ID" == "$this_bundle_id" ] || [ "$BUNDLE_ID" == "$this_bundle_id" ]; then
                     APP_DATA_GUID=$(basename "$APP_FOLDER")
                 fi
             fi
@@ -131,6 +138,7 @@ function defineAppPaths {
 
 function debugVars {
     echo "APP_NAME: $APP_NAME"
+    echo "EXECUTABLE: $EXECUTABLE"
     echo "ACTION: $ACTION"
     echo "PROFILE_NAME: $PROFILE_NAME"
     echo "BUNDLE_ID: $BUNDLE_ID"
@@ -191,7 +199,7 @@ function hasProfile {
 function backupData {
     local this_profile=$1
 
-    local this_group_path=$MP_ROOT/$APP_NAME/$APP_GROUP_DATA_GUID.GROUP.$this_profile
+    local this_group_path=$MP_ROOT/$BUNDLE_ID/$APP_GROUP_DATA_GUID.GROUP.$this_profile
     if [[ ! -z "$APP_GROUP_DATA_GUID" ]]; then
         rm -rf ${this_group_path}
         mkdir -p ${this_group_path}
@@ -201,7 +209,7 @@ function backupData {
         # echo "cp -a ${APP_GROUP_DATA_ROOT}/${APP_GROUP_DATA_GUID}/. ${this_group_path}"
     fi
 
-    local this_data_path=$MP_ROOT/$APP_NAME/$APP_DATA_GUID.DATA.$this_profile
+    local this_data_path=$MP_ROOT/$BUNDLE_ID/$APP_DATA_GUID.DATA.$this_profile
     if [[ ! -z "$APP_DATA_GUID" ]]; then
         rm -rf ${this_data_path}
         mkdir -p ${this_data_path}
@@ -225,7 +233,7 @@ function restoreData {
     # copy the files from back to original location
     APP_DATA_GUID=$(plutil -key APP_DATA_GUID_$APP_INDEX "$PLIST")
     if [[ ! -z "$APP_DATA_GUID" ]]; then
-        local this_group_path=$MP_ROOT/$APP_NAME/$APP_DATA_GUID.DATA.$this_profile
+        local this_group_path=$MP_ROOT/$BUNDLE_ID/$APP_DATA_GUID.DATA.$this_profile
 
         if [ ! -d "$this_group_path" ]; then
             echo "PROFILE DATA MISSING at PATH: $this_group_path"
@@ -243,7 +251,7 @@ function restoreData {
 
     APP_GROUP_DATA_GUID=$(plutil -key APP_GROUP_DATA_GUID_$APP_INDEX "$PLIST")
     if [[ ! -z "$APP_GROUP_DATA_GUID" ]]; then
-        local this_group_path=$MP_ROOT/$APP_NAME/$APP_GROUP_DATA_GUID.GROUP.$this_profile
+        local this_group_path=$MP_ROOT/$BUNDLE_ID/$APP_GROUP_DATA_GUID.GROUP.$this_profile
 
         if [ ! -d "$this_group_path" ]; then
             echo "PROFILE DATA MISSING at PATH: $this_group_path"
@@ -268,7 +276,9 @@ if [ "$ACTION" == "create" ]; then
     defineBundleIds
     defineAppPaths 
     getAppIndexFromName
-    
+
+    killall "$EXECUTABLE" 2> /dev/null
+
     if [[ -z "$APP_INDEX" ]]; then 
 
         echo "CREATING ORIGINAL $APP_INDEX"
@@ -276,11 +286,13 @@ if [ "$ACTION" == "create" ]; then
         APP_COUNT=$(($APP_COUNT + 1))
         APP_INDEX=$APP_COUNT
 
+    
         # this is a new app, so make a clone of the original
         # create original profile info
         plutil -key APP_COUNT -string $APP_COUNT $PLIST
-        plutil -key "APP_NAME_$APP_INDEX" -string $APP_NAME $PLIST
+        plutil -key "APP_NAME_$APP_INDEX" -string "$APP_NAME" $PLIST
         plutil -key "BUNDLE_ID_$APP_INDEX" -string $BUNDLE_ID $PLIST
+        plutil -key "EXECUTABLE_$APP_INDEX" -string $EXECUTABLE $PLIST
         plutil -key "PROFILES_$APP_INDEX" -array $PLIST
         plutil -key "PROFILES_$APP_INDEX" -arrayadd -string $ORIG_PROFILE_NAME $PLIST
         if [[ ! -z "$APP_GROUP_DATA_GUID" ]]; then 
@@ -314,6 +326,8 @@ if [ "$ACTION" == "apply" ]; then
         exit 1
     fi
 
+    
+
     CURRENT_PROFILE=$(plutil -key "CURRENT_PROFILE_$APP_INDEX" $PLIST)
     if [ "$CURRENT_PROFILE" == "$PROFILE_NAME" ]; then
         echo "Profile $PROFILE_NAME is already applied"
@@ -324,6 +338,9 @@ if [ "$ACTION" == "apply" ]; then
 
     APP_GROUP_DATA_GUID=$(plutil -key "APP_GROUP_DATA_GUID_$APP_INDEX" $PLIST)
     APP_DATA_GUID=$(plutil -key "APP_DATA_GUID_$APP_INDEX" $PLIST)
+    EXECUTABLE=$(plutil -key "EXECUTABLE_$APP_INDEX" $PLIST)
+
+    killall "$EXECUTABLE" 2> /dev/null
 
     backupData $CURRENT_PROFILE
     restoreData $PROFILE_NAME
