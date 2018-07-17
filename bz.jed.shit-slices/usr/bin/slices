@@ -7,6 +7,7 @@
 APP_NAME=$1
 ACTION=$2
 PROFILE_NAME=$3
+NO_LAUNCH=$4
 
 BUNDLE_ID=""
 EXECUTABLE=$APP_NAME
@@ -326,11 +327,15 @@ if [ "$ACTION" == "apply" ]; then
         exit 1
     fi
 
-    
-
     CURRENT_PROFILE=$(plutil -key "CURRENT_PROFILE_$APP_INDEX" $PLIST)
+    BUNDLE_ID=$(plutil -key "BUNDLE_ID_$APP_INDEX" $PLIST)
     if [ "$CURRENT_PROFILE" == "$PROFILE_NAME" ]; then
         echo "Profile $PROFILE_NAME is already applied"
+        
+        if [[ -z "$NO_LAUNCH" ]]; then
+            activator send $BUNDLE_ID
+        fi
+        
         exit 1
     fi
     
@@ -345,6 +350,8 @@ if [ "$ACTION" == "apply" ]; then
     backupData $CURRENT_PROFILE
     restoreData $PROFILE_NAME
     plutil -key "CURRENT_PROFILE_$APP_INDEX" -string $PROFILE_NAME $PLIST
-    activator send $BUNDLE_ID
+    if [[ -z "$NO_LAUNCH" ]]; then
+        activator send $BUNDLE_ID
+    fi
     exit 0
 fi
