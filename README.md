@@ -69,3 +69,10 @@ This has been tested with the following apps:
  - Facebook
  
 Open an issue if you find that other apps work or don't work.
+
+## Dependencies
+
+Activator - https://rpetri.ch/repo/ https://github.com/rpetrich
+
+PlUtil - http://repo.bingner.com http://github.com/sbingner
+
