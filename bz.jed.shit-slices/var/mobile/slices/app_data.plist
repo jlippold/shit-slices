@@ -4,5 +4,7 @@
 <dict>
 	<key>Snapchat</key>
 	<string>com.toyopagroup.picaboo</string>
+	<key>Facebook</key>
+	<string>com.facebook.Facebook</string>
 </dict>
 </plist>

@@ -4,5 +4,7 @@
 <dict>
 	<key>Snapchat</key>
 	<string>group.snapchat.picaboo</string>
+	<key>Facebook</key>
+	<string>group.com.facebook.Facebook</string>
 </dict>
 </plist>
