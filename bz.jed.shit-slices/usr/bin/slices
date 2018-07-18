@@ -113,7 +113,7 @@ function defineAppPaths {
         if [ -d ${APP_FOLDER} ]; then
             if [ -f "$APP_FOLDER/$metadata" ]; then
                 local this_bundle_id=$(plutil -key MCMMetadataIdentifier "$APP_FOLDER/$metadata" 2> /dev/null)
-                if [ "$GROUP_BUNDLE_ID" == "$this_bundle_id" ] || [ "$BUNDLE_ID" == "$this_bundle_id" ]; then
+                if [ "$GROUP_BUNDLE_ID" == "$this_bundle_id" ] || [ "$BUNDLE_ID" == "$this_bundle_id" ] || [[ "$this_bundle_id" == *"$BUNDLE_ID" ]]; then
                     APP_GROUP_DATA_GUID=$(basename "$APP_FOLDER")
                 fi
             fi
