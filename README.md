@@ -36,6 +36,12 @@ To switch back to the other profile, type
 slices "Snapchat" apply new-profile
 ```
 
+### Delete all profile data
+
+```
+slices reset
+```
+
 ## Activator
 
 Since there's no UI, and it's a pain in the ass to enter these commands by hand, we can use Activator to setup easy app switching.
@@ -66,7 +72,7 @@ This has been tested with the following apps:
 
  - Instagram  
  - Snapchat
- 
+
 Open an issue if you find that other apps work or don't work.
 
 ## Dependencies

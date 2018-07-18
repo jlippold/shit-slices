@@ -1,7 +1,7 @@
 Package: bz.jed.shit-slices
 Name: 💩 Slices
 Depends: com.ex.libsubstitute, coreutils, coreutils-bin, libactivator, com.bingner.plutil
-Version: 0.0.1
+Version: 0.0.2
 Architecture: iphoneos-arm
 Description: Adds multiple profiles to app store applications
 Maintainer: Jed
