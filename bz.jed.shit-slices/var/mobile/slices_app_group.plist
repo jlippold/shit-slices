@@ -6,9 +6,9 @@
 	<array>
 		<string>group.snapchat.picaboo</string>
 	</array>
-	<key>Facebook</key>
+	<key>Instagram</key>
 	<array>
-		<string>group.com.facebook.Facebook</string>
+		<string>group.com.burnb.instagram</string>
 		<string>group.com.facebook.family</string>
 	</array>
 </dict>

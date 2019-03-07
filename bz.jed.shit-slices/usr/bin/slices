@@ -17,6 +17,7 @@ PROFILES=()
 
 ORIG_PROFILE_NAME="original"
 MP_ROOT="/private/var/mobile/slices"
+RUNNING="$MP_ROOT/RUNNING"
 APP_ROOT="/var/containers/Bundle/Application"
 APP_GROUP_DATA_ROOT="/var/mobile/Containers/Shared/AppGroup"
 APP_DATA_ROOT="/var/mobile/Containers/Data/Application"
@@ -38,6 +39,12 @@ if [ "$1" == "reset" ]; then
     exit 0
 fi
 
+if [ -f "$RUNNING" ]; then
+    echo "Aborting, already running"
+    exit 1
+fi
+
+touch ${RUNNING}
 
 ### FUNCTIONS
 
@@ -45,6 +52,7 @@ function validate {
 
     if [[ -z "$PROFILE_NAME" ]]; then
         echo "MISSING PROFILE"
+        rm -f ${RUNNING}
         exit 1;
     fi
 
@@ -54,6 +62,7 @@ function validate {
         echo "APPLYING PROFILE $PROFILE_NAME"
     else
         echo "UNKNOWN ACTION PARAMETER"
+        rm -f ${RUNNING}
         exit 1;
     fi
 }
@@ -86,6 +95,7 @@ function defineBundleIds {
 
     if [[ -z "$BUNDLE_ID" ]]; then
         echo "Could not find bundle id for $APP_NAME"
+        rm -f ${RUNNING}
         exit 1;
     fi
 
@@ -157,6 +167,7 @@ function defineAppPaths {
     local items=${#APP_GROUP_DATA_GUID[@]}
     if [ $items -gt 0 ] && [[ -z "$APP_DATA_GUID" ]]; then
         echo "CANNOT FIND APP DATA"
+        rm -f ${RUNNING}
         exit 1;
     fi
 }
@@ -255,6 +266,7 @@ function restoreData {
     hasProfile $this_profile
     if [ "$?" == 1 ]; then
         echo "There is no profile named $this_profile for $APP_NAME"
+        rm -f ${RUNNING}
         exit 1
     fi
     
@@ -265,6 +277,7 @@ function restoreData {
 
         if [ ! -d "$this_group_path" ]; then
             echo "PROFILE DATA MISSING at PATH: $this_group_path"
+            rm -f ${RUNNING}
             exit 1
         fi
 
@@ -286,6 +299,7 @@ function restoreData {
 
             if [ ! -d "$this_group_path" ]; then
                 echo "PROFILE DATA MISSING at PATH: $this_group_path"
+                rm -f ${RUNNING}
                 exit 1
             fi
 
@@ -354,6 +368,7 @@ if [ "$ACTION" == "create" ]; then
     plutil -key "CURRENT_PROFILE_$APP_INDEX" -string $PROFILE_NAME $PLIST
     
     backupData $PROFILE_NAME
+    rm -f ${RUNNING}
     # debugVars
     exit 0
 fi
@@ -362,6 +377,7 @@ if [ "$ACTION" == "apply" ]; then
     getAppIndexFromName
     if [[ -z "$APP_INDEX" ]]; then
         echo "There is no saved data for $APP_NAME"
+        rm -f ${RUNNING}
         exit 1
     fi
 
@@ -373,7 +389,7 @@ if [ "$ACTION" == "apply" ]; then
         if [[ -z "$NO_LAUNCH" ]]; then
             activator send $BUNDLE_ID
         fi
-        
+        rm -f ${RUNNING}
         exit 1
     fi
     
@@ -395,5 +411,8 @@ if [ "$ACTION" == "apply" ]; then
     if [[ -z "$NO_LAUNCH" ]]; then
         activator send $BUNDLE_ID
     fi
+    rm -f ${RUNNING}
     exit 0
 fi
+
+rm -f ${RUNNING}
